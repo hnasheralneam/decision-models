@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A small decision console for the Clef-Flash decision model served by llama.cpp.">
+  <title>Clef · Decision Console</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23c9f56d'/%3E%3Cpath d='M20 40V25m0 0 12 12 12-18' fill='none' stroke='%230c1107' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Clef decision console home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="24" height="24">
+          <path d="M18 42V24m0 0 14 14 14-20" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand-copy">
+        <strong>Clef</strong>
+        <span>Decision console</span>
+      </span>
+    </a>
+
+    <div class="topbar-right">
+      <button class="server-pill is-checking" id="serverStatus" type="button" title="Check server again">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="serverStatusText">Connecting…</span>
+      </button>
+      <div class="endpoint" title="llama.cpp endpoint">
+        <span>llama.cpp</span>
+        <code>10.0.0.143:8080</code>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="panel input-panel" aria-labelledby="inputTitle">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">01 · Input</p>
+          <h1 id="inputTitle">What should it decide?</h1>
+        </div>
+        <span class="model-badge" id="modelBadge" hidden>clef-flash</span>
+      </div>
+
+      <form id="decisionForm" novalidate>
+        <div class="field">
+          <div class="field-label">
+            <span>Image</span>
+            <span class="field-note">optional · resized locally</span>
+          </div>
+
+          <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Choose an image to upload">
+            <input type="file" id="fileInput" accept="image/*" hidden>
+            <span class="dropzone-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2.5"/>
+                <circle cx="8.5" cy="9" r="1.4"/>
+                <path d="m4.5 17 4.8-4.8a1.7 1.7 0 0 1 2.4 0l5.3 5.3M14 14.5l1.7-1.7a1.7 1.7 0 0 1 2.4 0l2.4 2.4"/>
+              </svg>
+            </span>
+            <span class="dropzone-copy">
+              <strong>Drop an image here</strong>
+              <span>or click to browse · you can paste too</span>
+            </span>
+            <span class="dropzone-format">PNG · JPG · WEBP</span>
+          </div>
+
+          <div class="image-preview" id="imagePreview" hidden>
+            <div class="preview-frame">
+              <img id="previewImg" alt="Selected image preview">
+            </div>
+            <div class="preview-meta">
+              <div>
+                <strong id="previewName">image</strong>
+                <span id="previewDetails"></span>
+              </div>
+              <button type="button" class="icon-button" id="removeImage" aria-label="Remove image" title="Remove image">
+                <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <path d="m5 5 10 10M15 5 5 15"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <label for="stateInput">Context</label>
+            <span class="field-note" id="charCount">0 / 8000</span>
+          </div>
+          <textarea id="stateInput" name="state" rows="4" maxlength="8000"
+            placeholder="Describe the situation, document, or image the model should evaluate…"></textarea>
+          <p class="hint">The state is the evidence. Questions below decide what you want to know about it.</p>
+        </div>
+
+        <div class="questions-heading">
+          <div class="field-label">
+            <span>Questions</span>
+            <span class="field-note" id="questionCount">1 question</span>
+          </div>
+          <button type="button" class="text-button" id="addQuestion">
+            <span aria-hidden="true">+</span> Add question
+          </button>
+        </div>
+
+        <div class="questions" id="questions"></div>
+
+        <div class="form-error" id="formError" role="alert" hidden></div>
+
+        <div class="run-row">
+          <button type="submit" class="primary-button" id="runButton">
+            <span class="button-spinner" aria-hidden="true"></span>
+            <span class="button-label">Run decision</span>
+            <kbd><span class="mod-key">⌘</span>↵</kbd>
+          </button>
+          <span class="run-note">One forward pass · no text generated</span>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel output-panel" aria-labelledby="outputTitle">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">02 · Decision</p>
+          <h2 id="outputTitle">Model output</h2>
+        </div>
+        <button type="button" class="text-button copy-button" id="copyJson" hidden>
+          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="6.5" y="6.5" width="9" height="9" rx="1.5"/>
+            <path d="M13.5 6.5v-2a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 4.5V11a1.5 1.5 0 0 0 1.5 1.5h1"/>
+          </svg>
+          <span>Copy JSON</span>
+        </button>
+      </div>
+
+      <div class="empty-state" id="outputEmpty">
+        <div class="empty-visual" aria-hidden="true">
+          <span class="orbit orbit-a"></span>
+          <span class="orbit orbit-b"></span>
+          <span class="orbit orbit-c"></span>
+          <span class="core-dot"></span>
+          <span class="satellite satellite-a"></span>
+          <span class="satellite satellite-b"></span>
+        </div>
+        <h3>No decision yet</h3>
+        <p>Add context, an image, and the options you want scored. Clef answers every question in a single forward pass.</p>
+        <div class="empty-facts">
+          <span><strong>0</strong> tokens generated</span>
+          <span><strong>typed</strong> answers</span>
+          <span><strong>1</strong> pass</span>
+        </div>
+      </div>
+
+      <div class="loading-state" id="outputLoading" role="status" hidden>
+        <div class="decision-orb" aria-hidden="true"><span></span></div>
+        <p>Scoring your options…</p>
+        <span>Reading the state once</span>
+      </div>
+
+      <div class="error-state" id="outputError" role="alert" hidden>
+        <span class="error-icon" aria-hidden="true">!</span>
+        <div>
+          <h3>Decision failed</h3>
+          <p id="errorMessage"></p>
+          <p class="error-tip">Check that the llama server is running at <code id="errorServer">10.0.0.143:8080</code>.</p>
+        </div>
+      </div>
+
+      <div class="results" id="resultArea" aria-live="polite" hidden>
+        <div class="result-meta" id="resultMeta"></div>
+        <div class="answers" id="answers"></div>
+        <details class="raw-response">
+          <summary>Raw response <span>JSON</span></summary>
+          <pre id="rawJson"></pre>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Clef-Flash · <code>/v1/systemone</code></span>
+    <span class="footer-note">Probabilities come from the decision head, not generated text.</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
