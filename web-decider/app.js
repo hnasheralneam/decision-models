@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const DEFAULT_SERVER = "http://10.0.0.143:8080";
+  const DEFAULT_SERVER = "https://sysone.hnasheralneam.dev";
   const MAX_IMAGE_EDGE = 1600;
   const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
   const REQUEST_TIMEOUT_MS = 120_000;

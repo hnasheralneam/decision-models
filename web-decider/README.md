@@ -1,7 +1,7 @@
 # Clef decision console
 
 A small, dependency-free web UI for the **Clef-Flash** decision model served by
-llama.cpp at `http://10.0.0.143:8080`.
+llama.cpp at `https://sysone.hnasheralneam.dev`.
 
 It takes an image and/or a text state, lets you define typed decision questions,
 and renders the model's probabilities. Everything is one static page — no build
@@ -24,7 +24,7 @@ python3 serve.py --bind 0.0.0.0 --port 8088
 ```
 
 The llama server enables CORS for the browser origin, so the page calls
-`http://10.0.0.143:8080/v1/systemone` directly.
+`https://sysone.hnasheralneam.dev/v1/systemone` directly.
 
 ## Use
 
@@ -45,13 +45,13 @@ can be copied from the output panel.
 The server URL is defined at the top of [`app.js`](app.js):
 
 ```js
-const DEFAULT_SERVER = "http://10.0.0.143:8080";
+const DEFAULT_SERVER = "https://sysone.hnasheralneam.dev";
 ```
 
 You can override it for a single page load without editing the file:
 
 ```
-http://127.0.0.1:8088/?server=http://10.0.0.143:8080
+http://127.0.0.1:8088/?server=https://sysone.hnasheralneam.dev
 ```
 
 ## How it maps to the API

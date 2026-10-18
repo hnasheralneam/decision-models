@@ -1,7 +1,7 @@
 # Photo Grader
 
 A model-assisted photo critique built on the **Clef-Flash** decision model at
-`http://10.0.0.143:8080`. Upload a photograph and get a scored read on lighting,
+`https://sysone.hnasheralneam.dev`. Upload a photograph and get a scored read on lighting,
 exposure, framing, focus, composition, color, background, and subject clarity —
 with follow-up questions wherever the model thinks something needs work.
 
@@ -83,13 +83,13 @@ need a follow-up. Scores are model estimates, not camera measurements.
 The server URL is defined at the top of [`app.js`](app.js):
 
 ```js
-const DEFAULT_SERVER = "http://10.0.0.143:8080";
+const DEFAULT_SERVER = "https://sysone.hnasheralneam.dev";
 ```
 
 Override it for a single page load:
 
 ```
-http://127.0.0.1:8089/?server=http://10.0.0.143:8080
+http://127.0.0.1:8089/?server=https://sysone.hnasheralneam.dev
 ```
 
 ## Files
